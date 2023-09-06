@@ -3,6 +3,15 @@
 @tailwind utilities;
 
 html {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Outfit', sans-serif;
+}
 
+@layer components {
+    .menu-item-expanded {
+        @apply flex flex-row items-center gap-3 transition-all duration-300 cursor-pointer px-4 py-3 border-r border-transparent rounded-lg hover:border-accent hover:bg-neutral;
+    }
+
+    .menu-item {
+        @apply transition-all duration-300 cursor-pointer hover:bg-neutral p-2 rounded-md border-r border-transparent hover:border-accent
+    }
 }
