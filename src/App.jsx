@@ -1,5 +1,5 @@
-import UnauthenticatedApp from "./components/views/UnauthenticatedApp";
-import AuthenticatedApp from "./components/views/AuthenticatedApp";
+import UnauthenticatedApp from "./views/UnauthenticatedApp";
+import AuthenticatedApp from "./views/AuthenticatedApp";
 import { useAuth } from "./hooks/useAuth";
 
 function App() {
