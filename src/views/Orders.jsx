@@ -5,15 +5,29 @@ import { products } from "../mocks/data/products";
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+
+  const previousPage = () => {
+    if (page > 1) {
+      setPage(page - 1);
+    }
+  };
+
+  const nextPage = () => {
+    if (page < totalPages) {
+      setPage(page + 1);
+    }
+  };
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+    console.log(page, totalPages);
+  }, [page]);
 
   const fetchOrders = () => {
     setLoading(true);
-    const url =
-      "https://cors-anywhere.herokuapp.com/https://piesolandia.pl/wp-json/wc/v3/orders?per_page=20&status=completed";
+    const url = `https://cors-anywhere.herokuapp.com/https://piesolandia.pl/wp-json/wc/v3/orders?per_page=20&page=${page}&status=completed`;
     const consumerKey = import.meta.env.VITE_WC_CK;
     const consumerSecret = import.meta.env.VITE_WC_CS;
 
@@ -29,6 +43,8 @@ const Orders = () => {
         if (!response.ok) {
           throw new Error(`Błąd API: ${response.statusText}`);
         }
+        const totalPages = response.headers.get("X-WP-TotalPages");
+        setTotalPages(totalPages);
         return response.json();
       })
       .then((data) => {
@@ -211,6 +227,23 @@ const Orders = () => {
             </>
           )}
         </table>
+      </div>
+      <div className="join">
+        <button
+          onClick={previousPage}
+          className={`${page === 1 ? "btn-disabled" : null} join-item btn`}
+        >
+          «
+        </button>
+        <button className="join-item btn">{page}</button>
+        <button
+          onClick={nextPage}
+          className={`${
+            page === totalPages ? "btn-disabled" : null
+          } join-item btn`}
+        >
+          »
+        </button>
       </div>
     </>
   );
