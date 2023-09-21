@@ -1,12 +1,58 @@
 import React, { useEffect, useState } from "react";
 import Title from "../components/atoms/Title";
 import { products } from "../mocks/data/products";
+import pl from "date-fns/locale/pl";
+import DatePicker, { registerLocale } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+registerLocale("pl", pl);
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [perPage, setPerPage] = useState(20);
+
+  const formatDate = (isoDate) => {
+    const date = new Date(isoDate);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  const formatDateForAPI = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const getFirstDayOfMonth = () => {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    return formatDateForAPI(firstDayOfMonth);
+  };
+
+  // const [startDate, setStartDate] = useState(new Date(getFirstDayOfMonth()));
+  // const [endDate, setEndDate] = useState(new Date());
+
+  const [startDate, setStartDate] = useState(new Date(getFirstDayOfMonth()));
+  const [endDate, setEndDate] = useState(new Date());
+  const [startDateForAPI, setStartDateForAPI] = useState(
+    formatDateForAPI(new Date(getFirstDayOfMonth()))
+  );
+  const [endDateForAPI, setEndDateForAPI] = useState(
+    formatDateForAPI(new Date())
+  );
+
+  const handleDateChange = (dates) => {
+    const [start, end] = dates;
+    setStartDate(start);
+    setEndDate(end);
+    setStartDateForAPI(formatDateForAPI(start));
+    setEndDateForAPI(formatDateForAPI(end));
+  };
 
   const previousPage = () => {
     if (page > 1) {
@@ -22,12 +68,12 @@ const Orders = () => {
 
   useEffect(() => {
     fetchOrders();
-    console.log(page, totalPages);
-  }, [page]);
+    console.log(page, totalPages, perPage);
+  }, [page, perPage, endDate]);
 
   const fetchOrders = () => {
     setLoading(true);
-    const url = `https://cors-anywhere.herokuapp.com/https://piesolandia.pl/wp-json/wc/v3/orders?per_page=20&page=${page}&status=completed`;
+    const url = `https://cors-anywhere.herokuapp.com/https://piesolandia.pl/wp-json/wc/v3/orders?per_page=${perPage}&page=${page}&status=completed&after=${startDateForAPI}T00:00:00&before=${endDateForAPI}T23:59:59`;
     const consumerKey = import.meta.env.VITE_WC_CK;
     const consumerSecret = import.meta.env.VITE_WC_CS;
 
@@ -95,17 +141,11 @@ const Orders = () => {
     return totalProfit.toFixed(2);
   };
 
-  const formatDate = (isoDate) => {
-    const date = new Date(isoDate);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
-
   const shippingPrice = (method) => {
     switch (method) {
-      case "12": //paczkomat
+      case "12":
+      case "2":
+      case "6": //paczkomat
         return 14.02;
       case "4": // kurier
         return 15.73;
@@ -154,9 +194,47 @@ const Orders = () => {
       .toFixed(2);
   };
 
+  const handlePerPageChange = (event) => {
+    const selectedPerPage = event.target.value;
+    setPerPage(selectedPerPage);
+  };
+
   return (
     <>
       <Title title="Zamówienia" />
+      <div className="flex justify-between items-center">
+        <div className="form-control w-full max-w-xs">
+          <label className="label">
+            <span className="label-text">Produktów na stronę</span>
+          </label>
+          <select
+            className="select select-bordered w-full max-w-xs"
+            value={perPage}
+            onChange={handlePerPageChange}
+          >
+            <option value="10">10</option>
+            <option selected value="20">
+              20
+            </option>
+            <option value="48">48</option>
+            <option value="72">72</option>
+          </select>
+        </div>
+        <div>
+          <label className="label">
+            <span className="label-text">Zakres dat</span>
+          </label>
+          <DatePicker
+            selectsRange={true}
+            startDate={startDate}
+            endDate={endDate}
+            onChange={handleDateChange}
+            locale="pl"
+            withPortal
+            className="select select-bordered"
+          />
+        </div>
+      </div>
       <div className="overflow-x-auto p-4 bg-base-300">
         <table className="table table-sm border-spacing-2">
           {loading ? (
@@ -239,7 +317,7 @@ const Orders = () => {
         <button
           onClick={nextPage}
           className={`${
-            page === totalPages ? "btn-disabled" : null
+            page === parseInt(totalPages) ? "btn-disabled" : null
           } join-item btn`}
         >
           »

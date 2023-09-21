@@ -1,5 +1,10 @@
 export const products = [
-  { id: 111, name: "Butelka Podróżna", wholesale_price: 18, price: 44.99 },
+  {
+    id: 111,
+    name: "Butelka Podróżna",
+    wholesale_price: 18,
+    price: 44.99,
+  },
   { id: 109, name: "Miska Anti-Splash", wholesale_price: 21.8, price: 60.99 },
   { id: 113, name: "Myjka", wholesale_price: 4.27, price: 24.99 },
   { id: 115, name: "Szczotka", wholesale_price: 6.39, price: 24.99 },
