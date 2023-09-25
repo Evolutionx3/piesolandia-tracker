@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from "react";
 import Title from "../components/atoms/Title";
-import { products } from "../mocks/data/products";
 import pl from "date-fns/locale/pl";
+import {
+  formatDateForAPI,
+  getFirstDayOfMonth,
+  calculateTotalOrderPrice,
+  calculateTotalShippingCost,
+  profitCalc,
+  filterProducts,
+  calculateTotalProfit,
+  shippingPrice,
+} from "../helpers/helpers";
 import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 registerLocale("pl", pl);
@@ -20,22 +29,6 @@ const Orders = () => {
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
   };
-
-  const formatDateForAPI = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
-  const getFirstDayOfMonth = () => {
-    const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    return formatDateForAPI(firstDayOfMonth);
-  };
-
-  // const [startDate, setStartDate] = useState(new Date(getFirstDayOfMonth()));
-  // const [endDate, setEndDate] = useState(new Date());
 
   const [startDate, setStartDate] = useState(new Date(getFirstDayOfMonth()));
   const [endDate, setEndDate] = useState(new Date());
@@ -77,13 +70,11 @@ const Orders = () => {
     const consumerKey = import.meta.env.VITE_WC_CK;
     const consumerSecret = import.meta.env.VITE_WC_CS;
 
-    // Tworzymy nagłówek autoryzacyjny w formacie Basic Auth
     const base64 = btoa(`${consumerKey}:${consumerSecret}`);
     const headers = new Headers({
       Authorization: `Basic ${base64}`,
     });
 
-    // Wykonujemy zapytanie GET do WooCommerce API
     fetch(url, { method: "GET", headers: headers })
       .then((response) => {
         if (!response.ok) {
@@ -101,97 +92,6 @@ const Orders = () => {
       .catch((error) => {
         console.error(error);
       });
-  };
-
-  const filterProducts = (order, typeOfData) => {
-    return order.line_items
-      .filter((item) => item.price !== 0)
-      .map((item) => {
-        if (typeOfData === "product_id") {
-          return item.product_id;
-        } else if (typeOfData === "quantity") {
-          return item.quantity;
-        }
-        return null;
-      });
-  };
-
-  const getProductById = (productId) => {
-    return products.find((product) => product.id === productId);
-  };
-
-  const profitCalc = (price, shippingPrice, productIds, quantities) => {
-    let totalProfit = parseFloat(price);
-
-    productIds.forEach((productId, index) => {
-      const product = getProductById(productId);
-
-      if (product) {
-        const wholesalePrice = parseFloat(product.wholesale_price);
-        const quantity = parseFloat(quantities[index]);
-
-        if (!isNaN(wholesalePrice) && !isNaN(quantity)) {
-          totalProfit -= wholesalePrice * quantity;
-        }
-      }
-    });
-
-    totalProfit -= parseFloat(shippingPrice);
-
-    return totalProfit.toFixed(2);
-  };
-
-  const shippingPrice = (method) => {
-    switch (method) {
-      case "12":
-      case "2":
-      case "6": //paczkomat
-        return 14.02;
-      case "4": // kurier
-        return 15.73;
-      case "13": //pobranie
-        return 18.79;
-    }
-  };
-
-  const calculateTotalShippingCost = (orders) => {
-    return orders
-      .reduce((total, order) => {
-        if (order.shipping_lines.length > 0) {
-          const shippingCost = parseFloat(
-            shippingPrice(order.shipping_lines[0].instance_id)
-          );
-          if (!isNaN(shippingCost)) {
-            total += shippingCost;
-          }
-        }
-        return total;
-      }, 0)
-      .toFixed(2);
-  };
-
-  const calculateTotalOrderPrice = (orders) => {
-    return orders
-      .reduce((total, order) => {
-        total += parseFloat(order.total);
-        return total;
-      }, 0)
-      .toFixed(2);
-  };
-
-  const calculateTotalProfit = (orders) => {
-    return orders
-      .reduce((total, order) => {
-        const orderProfit = profitCalc(
-          parseFloat(order.total),
-          parseFloat(shippingPrice(order.shipping_lines[0].instance_id)),
-          filterProducts(order, "product_id"),
-          filterProducts(order, "quantity")
-        );
-        total += parseFloat(orderProfit);
-        return total;
-      }, 0)
-      .toFixed(2);
   };
 
   const handlePerPageChange = (event) => {
