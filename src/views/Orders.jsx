@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import Title from "../components/atoms/Title";
-import pl from "date-fns/locale/pl";
 import {
   formatDateForAPI,
   getFirstDayOfMonth,
@@ -11,9 +10,8 @@ import {
   calculateTotalProfit,
   shippingPrice,
 } from "../helpers/helpers";
-import DatePicker, { registerLocale } from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-registerLocale("pl", pl);
+
+import Datepicker from "react-tailwindcss-datepicker";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -30,21 +28,31 @@ const Orders = () => {
     return `${day}-${month}-${year}`;
   };
 
-  const [startDate, setStartDate] = useState(new Date(getFirstDayOfMonth()));
-  const [endDate, setEndDate] = useState(new Date());
-  const [startDateForAPI, setStartDateForAPI] = useState(
-    formatDateForAPI(new Date(getFirstDayOfMonth()))
-  );
-  const [endDateForAPI, setEndDateForAPI] = useState(
-    formatDateForAPI(new Date())
-  );
+  const [dates, setDates] = useState({
+    startDate: new Date(getFirstDayOfMonth()),
+    endDate: new Date(),
+  });
 
-  const handleDateChange = (dates) => {
-    const [start, end] = dates;
-    setStartDate(start);
-    setEndDate(end);
-    setStartDateForAPI(formatDateForAPI(start));
-    setEndDateForAPI(formatDateForAPI(end));
+  const [datesForAPI, setDatesForAPI] = useState({
+    startDate: formatDateForAPI(new Date(getFirstDayOfMonth())),
+    endDate: formatDateForAPI(new Date()),
+  });
+
+  const handleDateChange = (selectedDates) => {
+    const { startDate, endDate } = selectedDates;
+
+    const startDateObject = new Date(startDate);
+    const endDateObject = new Date(endDate);
+
+    setDates({
+      startDate: startDateObject,
+      endDate: endDateObject,
+    });
+
+    setDatesForAPI({
+      startDate: formatDateForAPI(startDateObject),
+      endDate: formatDateForAPI(endDateObject),
+    });
   };
 
   const previousPage = () => {
@@ -62,11 +70,11 @@ const Orders = () => {
   useEffect(() => {
     fetchOrders();
     console.log(page, totalPages, perPage);
-  }, [page, perPage, endDate]);
+  }, [page, perPage, dates.endDate]);
 
   const fetchOrders = () => {
     setLoading(true);
-    const url = `https://cors-anywhere.herokuapp.com/https://piesolandia.pl/wp-json/wc/v3/orders?per_page=${perPage}&page=${page}&status=completed&after=${startDateForAPI}T00:00:00&before=${endDateForAPI}T23:59:59`;
+    const url = `https://cors-anywhere.herokuapp.com/https://piesolandia.pl/wp-json/wc/v3/orders?per_page=${perPage}&page=${page}&status=completed&after=${datesForAPI.startDate}T00:00:00&before=${datesForAPI.endDate}T23:59:59`;
     const consumerKey = import.meta.env.VITE_WC_CK;
     const consumerSecret = import.meta.env.VITE_WC_CS;
 
@@ -124,14 +132,13 @@ const Orders = () => {
           <label className="label">
             <span className="label-text">Zakres dat</span>
           </label>
-          <DatePicker
-            selectsRange={true}
-            startDate={startDate}
-            endDate={endDate}
+          <Datepicker
+            i18n={"pl"}
+            value={dates}
             onChange={handleDateChange}
-            locale="pl"
-            withPortal
-            className="select select-bordered"
+            primaryColor="teal"
+            inputClassName="select select-bordered"
+            containerClassName="bg-base-300"
           />
         </div>
       </div>
