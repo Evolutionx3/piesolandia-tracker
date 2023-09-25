@@ -136,7 +136,7 @@ const Orders = () => {
         </div>
       </div>
       <div className="overflow-x-auto p-4 bg-base-300">
-        <table className="table table-sm border-spacing-2">
+        <table className="table border-spacing-2">
           {loading ? (
             <span className="loading loading-spinner loading-md"></span>
           ) : (
@@ -156,7 +156,7 @@ const Orders = () => {
                   <tr key={order.id}>
                     <th>{order.id}</th>
                     <td>{formatDate(order.date_created)}</td>
-                    <td>
+                    <td className="max-w-lg">
                       {order.line_items
                         .filter((item) => item.price !== 0)
                         .map((item, index) => (
@@ -190,7 +190,7 @@ const Orders = () => {
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
+              <tfoot className="text-sm">
                 <tr>
                   <td></td>
                   <td></td>
@@ -213,7 +213,7 @@ const Orders = () => {
         >
           «
         </button>
-        <button className="join-item btn">{page}</button>
+        <span className="join-item btn cursor-default">{page}</span>
         <button
           onClick={nextPage}
           className={`${
